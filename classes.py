@@ -1,17 +1,26 @@
 import logging
+import re
+from tkinter import N
 from values import *
 
+specialKeyRegex = [
+	"basket[0-9]+",
+	"chunk\(.*,-?[0-9]+, -?[0-9]+\)"
+]
+
 class HASave:
-	data: bytearray
-	save_version: int = 0
-	section_count: int = 1
-	values:dict = {}
 	__offset__:int = 0
-	def __init__(self,data: bytearray):
-		self.data = data
+	def __init__(self):
+		self.data = bytearray([])
+		self.save_version = 0
+		self.section_count = 0
+		self.values = {}
+		self.__offset__ = 0
+	
+	def parse(self, ba:bytearray):
+		self.data = ba
 		self.save_version = self.__pop_byte__()
 		self.section_count = self.__ext_short__()
-		self.values = {}
 		while 1==1:
 			try:
 				key, l = self.__ext_str__(False)
@@ -32,7 +41,17 @@ class HASave:
 				#raise KeyError(f"INVALID KEY: {key}")
 				break
 			logging.debug(f"value: {var}")
-			self.values[key] = var
+			if self.section_count >= 2:
+				for regex in specialKeyRegex:
+					if re.search(regex,key):
+						superKey = key
+				if not (superKey in self.values.keys()):
+					self.values[superKey] = {}
+				print(f"[{superKey}]{key}: {var}")
+				self.values[superKey][key] = var
+			else:
+				print(f"{key}:{var}")
+				self.values[key] = var
 
 	def __pop_byte__(self)->int:
 		self.__offset__ += 1
@@ -63,28 +82,37 @@ class HASave:
 		if (str_len<10) and (not is_value): return "",1
 		if (str_len>100): return "",1
 		string = ""
+		nulCounter = 0
 		for _ in range(str_len):
+			if nulCounter > 2: return "",1
 			val = self.__pop_byte__()
-			if val == 0: continue
+			if val == 0: nulCounter +=1; continue
 			string += chr(val)
+			nulCounter = 0
 		self.__pop_byte__()
 		return string,str_len
 	def __repr__(self):
 		return f"<HAsave v:{self.save_version} obj#: {len(self.values)}>"
-	def __getitem__(self, key):
+	def __getitem__(self,key):
 		return self.values[key]
 
 if __name__ == "__main__":
 	import json, os
-#	logging.basicConfig(level=logging.DEBUG)
+	logging.basicConfig(level=logging.DEBUG)
 	for path in os.listdir("save_data"):
 		print(path)
 		pth = f"save_data/{path}"
 		logging.info(f"testing {pth}")
 		save = None
 		with open(pth,"rb") as saveFile:
-			save = HASave(bytearray(saveFile.read()))
+			byte = saveFile.read()
+			bytearr = bytearray(byte)
+			save = HASave()
+			save.parse(bytearr)
+			
 		try: os.mkdir("json")
 		except FileExistsError: 0
 		with open(f"json/{path}.json","w") as file:
 			json.dump(save.values,file)
+		print(save.values)
+		print(save.__dict__)
