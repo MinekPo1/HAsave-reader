@@ -1,3 +1,4 @@
+from lib2to3.pgen2.parse import ParseError
 import logging
 import re
 from tkinter import N
@@ -6,7 +7,8 @@ from values import *
 specialKeyRegex = [
 	"basket[0-9]+",
 	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
-	"NPCchest_[0-9]+"
+	"NPCchest_[0-9]+",
+	"shack[0-9]+-zonedata"
 ]
 
 class HASave:
@@ -38,9 +40,7 @@ class HASave:
 			if var_type == "long":var  = self.__ext_long__()
 			if var_type == "str":var = self.__ext_str__(True)[0]
 			if var == None:
-				print("Parse Error @ Offset: ",self.__offset__,key)
-				#raise KeyError(f"INVALID KEY: {key}")
-				break
+				raise NameError(f"Parse Error @ Offset: {self.__offset__} {key}")
 			logging.debug(f"value: {var}")
 			if self.section_count >= 2:
 				for regex in specialKeyRegex:
@@ -107,8 +107,10 @@ if __name__ == "__main__":
 			byte = saveFile.read()
 			bytearr = bytearray(byte)
 			save = HASave()
-			save.parse(bytearr)
-			
+			try:
+				save.parse(bytearr)
+			except NameError as p:
+				print(p)
 		try: os.mkdir("json")
 		except FileExistsError: 0
 		with open(f"json/{path}.json","w") as file:

@@ -19,16 +19,18 @@ short_vars = [
 	"n_unclaimed_freefollower_names",
 	"currentEXP",
 	"numRebreeds",
-	"skillPointsSpendable"
+	"skillPointsSpendable",
+	"zone_item_n_strings",
+	"zone_item_n_longs",
+	"zone_item_n_shorts",
+	"outer_item_zone",
+	"outer_item_rot"
 	]
 short_regex = [
 	"entry[0-9]+_count",
-	"entry[0-9]+_n_strings",
-	"entry[0-9]+_n_shorts",
-	"entry[0-9]+_n_longs",
-	"[0-9]+,[0-9]+,[0-9]+_n_strings",
-	"[0-9]+,[0-9]+,[0-9]+_n_shorts",
-	"[0-9]+,[0-9]+,[0-9]+_n_longs",
+	".*_n_strings",
+	".*_n_shorts",
+	".*_n_longs",
 	"entry[0-9]+_slot",
 	"perk_[^_]*$",
 	"morph[0-9]+",
@@ -37,7 +39,7 @@ short_regex = [
 	"FREE FOLLOWER - .*_isClaimed",
 	"discovered_.*",
 	"-?[0-9]+,-?[0-9]+,id",
-	"entry[0-9]+_short[0-9]+_value",
+	".*short[0-9]+_value",
 	"player_inner_.",
 	"player_chunk_.",
 	"respawn_[0-9]+_inner.",
@@ -76,7 +78,9 @@ short_regex = [
 	".*_completions",
 	".*_isCollected",
 	"stat[0-9]+",
-	"musicboxplaying_[0-9]+"
+	"musicboxplaying_[0-9]+",
+	"interior_model_chunk.",
+	"interior_model_inner."
 	]
 long_vars = [
 	"default",
@@ -86,10 +90,11 @@ long_vars = [
 long_regex = [
 	"companion_[0-9]+_nextExp",
 	"companion_[0-9]+_pocketContainerID",
-	"entry[0-9]+_long[0-9]+_value",
+	".*_long[0-9]+_value",
 	"basket[0-9]+",
 	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
-	"NPCchest_[0-9]+"
+	"NPCchest_[0-9]+",
+	"shack[0-9]+-zonedata"
 	]
 str_vars = [
 	"player_zone",
@@ -97,10 +102,10 @@ str_vars = [
 	"creatureName"
 	]
 str_regex = [
-	"entry[0-9]+_string[0-9]+_key",
-	"entry[0-9]+_long[0-9]+_key",
-	"entry[0-9]+_short[0-9]+_key",
-	"entry[0-9]+_string[0-9]+_value",
+	".*_string[0-9]+_key",
+	".*_long[0-9]+_key",
+	".*_short[0-9]+_key",
+	".*_string[0-9]+_value",
 	"perk_slot_.",
 	".*_cached_status",
 	".*_cached_translation",
