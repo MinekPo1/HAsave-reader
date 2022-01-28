@@ -5,7 +5,8 @@ from values import *
 
 specialKeyRegex = [
 	"basket[0-9]+",
-	"chunk\(.*,-?[0-9]+, -?[0-9]+\)"
+	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
+	"NPCchest_[0-9]+"
 ]
 
 class HASave:
@@ -47,10 +48,8 @@ class HASave:
 						superKey = key
 				if not (superKey in self.values.keys()):
 					self.values[superKey] = {}
-				print(f"[{superKey}]{key}: {var}")
 				self.values[superKey][key] = var
 			else:
-				print(f"{key}:{var}")
 				self.values[key] = var
 
 	def __pop_byte__(self)->int:
@@ -98,7 +97,7 @@ class HASave:
 
 if __name__ == "__main__":
 	import json, os
-	logging.basicConfig(level=logging.DEBUG)
+#	logging.basicConfig(level=logging.DEBUG)
 	for path in os.listdir("save_data"):
 		print(path)
 		pth = f"save_data/{path}"
@@ -114,5 +113,3 @@ if __name__ == "__main__":
 		except FileExistsError: 0
 		with open(f"json/{path}.json","w") as file:
 			json.dump(save.values,file)
-		print(save.values)
-		print(save.__dict__)
