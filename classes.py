@@ -11,11 +11,11 @@ class HASave:
 		self.data = data
 		self.save_version = self.__pop_byte__()
 		self.section_count = self.__ext_short__()
+		self.values = {}
 		while 1==1:
 			try:
 				key, l = self.__ext_str__(False)
 			except IndexError as err:
-				print(err)
 				break
 			if (l == 0): continue
 			if (l == 1): self.__pop_byte__();continue
@@ -28,7 +28,7 @@ class HASave:
 			if var_type == "long":var  = self.__ext_long__()
 			if var_type == "str":var = self.__ext_str__(True)[0]
 			if var == None:
-				print("Parse Error @ Offset: ",self.__offset__)
+				print("Parse Error @ Offset: ",self.__offset__,key)
 				#raise KeyError(f"INVALID KEY: {key}")
 				break
 			logging.debug(f"value: {var}")
@@ -61,6 +61,7 @@ class HASave:
 		if str_len == 0: return "",0
 		if str_len%2 == 1: return "",1
 		if (str_len<10) and (not is_value): return "",1
+		if (str_len>100): return "",1
 		string = ""
 		for _ in range(str_len):
 			val = self.__pop_byte__()
@@ -75,7 +76,7 @@ class HASave:
 
 if __name__ == "__main__":
 	import json, os
-	logging.basicConfig(level=logging.DEBUG)
+#	logging.basicConfig(level=logging.DEBUG)
 	for path in os.listdir("save_data"):
 		print(path)
 		pth = f"save_data/{path}"
@@ -83,12 +84,7 @@ if __name__ == "__main__":
 		save = None
 		with open(pth,"rb") as saveFile:
 			save = HASave(bytearray(saveFile.read()))
-			print(save.values)
-			print(save.save_version)
-			print(save.section_count)
-			print(save)
 		try: os.mkdir("json")
 		except FileExistsError: 0
 		with open(f"json/{path}.json","w") as file:
 			json.dump(save.values,file)
-	print(HASave.values)

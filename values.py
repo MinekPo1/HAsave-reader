@@ -1,11 +1,6 @@
 import re
 short_vars = [
 	"n_stored_items",
-	"player_chunk_x",
-	"player_inner_x",
-	"player_chunk_x",
-	"player_inner_y",
-	"player_inner_z",
 	"noobia_version",
 	"PLAYER_ALIVE", #this is actually a boolean where a non-1 value = dead
 	"n_morphed_creatures",
@@ -17,6 +12,8 @@ short_vars = [
 short_regex = [
 	"entry[0-9]+_count",
 	"entry[0-9]+_n_strings",
+	"entry[0-9]+_n_shorts",
+	"entry[0-9]+_n_longs",
 	"entry[0-9]+_slot",
 	"perk_[^_]*$",
 	"morph[0-9]+",
@@ -24,7 +21,10 @@ short_regex = [
 	"FREE FOLLOWER - .*_isGenerated",
 	"FREE FOLLOWER - .*_isClaimed",
 	"discovered_.*",
-	"-?[0-9]+,-?[0-9]+,id"
+	"-?[0-9]+,-?[0-9]+,id",
+	"entry[0-9]+_short[0-9]+_value",
+	"player_inner_.",
+	"player_chunk_."
 	]
 long_vars = [
 	"default",
@@ -33,7 +33,8 @@ long_vars = [
 	]
 long_regex = [
 	"companion_[0-9]+_nextExp",
-	"companion_[0-9]+_pocketContainerID"
+	"companion_[0-9]+_pocketContainerID",
+	"entry[0-9]+_long[0-9]+_value"
 ]
 str_vars = [
 	"player_zone",
@@ -42,6 +43,8 @@ str_vars = [
 	]
 str_regex = [
 	"entry[0-9]+_string[0-9]+_key",
+	"entry[0-9]+_long[0-9]+_key",
+	"entry[0-9]+_short[0-9]+_key",
 	"entry[0-9]+_string[0-9]+_value",
 	"perk_slot_.",
 	".*_cached_status",
