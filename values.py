@@ -11,7 +11,15 @@ short_vars = [
 	"n_respawns",
 	"biome",
 	"floor-tex-index",
-	"floor-rot"
+	"floor-rot",
+	"n_ungenerated_floors",
+	"speed",
+	"slices",
+	"save_song_id_iterator",
+	"n_unclaimed_freefollower_names",
+	"currentEXP",
+	"numRebreeds",
+	"skillPointsSpendable"
 	]
 short_regex = [
 	"entry[0-9]+_count",
@@ -39,8 +47,36 @@ short_regex = [
 	"respawn_[0-9]+_day",
 	"respawn_[0-9]+_month",
 	"respawn_[0-9]+_year",
+	".*_restart_second",
+	".*_restart_minute",
+	".*_restart_hour",
+	".*_restart_day",
+	".*_restart_month",
+	".*_restart_year",
 	"[0-9]+,[0-9]+_numObjects",
-	"[0-9]+,[0-9]+,[0-9]+_rot"
+	"[0-9]+,[0-9]+,[0-9]+_rot",
+	"ungenerated_floor_[0-9]+_chunk.",
+	"ungenerated_floor_[0-9]+_floorModel",
+	"ungenerated_floor_[0-9]+_floorRot",
+	"ungenerated_floor_[0-9]+_smallBudget",
+	"ungenerated_floor_[0-9]+_largeBudget",
+	"ungenerated_floor_[0-9]+_caveartExists",
+	"ungenerated_floor_[0-9]+_caveartRot",
+	"ungenerated_floor_[0-9]+_caveartTex",
+	"ungenerated_floor_[0-9]+_hasFossil",
+	"ungenerated_floor_[0-9]+_spikes",
+	"slice-[0-9]+-n_instruments",
+	"slice-[0-9]+-instrument-[0-9]+-type",
+	"slice-[0-9]+-instrument-[0-9]+-n_pressed",
+	"slice-[0-9]+-instrument-[0-9]+-pressed-[0-9]+",
+	"slice-[0-9]+-instrument-[0-9]+-length-[0-9]+",
+	"savesong[0-9]+-.",
+	".*_progress",
+	".*_restart_dateSet",
+	".*_completions",
+	".*_isCollected",
+	"stat[0-9]+",
+	"musicboxplaying_[0-9]+"
 	]
 long_vars = [
 	"default",
@@ -52,8 +88,9 @@ long_regex = [
 	"companion_[0-9]+_pocketContainerID",
 	"entry[0-9]+_long[0-9]+_value",
 	"basket[0-9]+",
-	"chunk\(.*,-?[0-9]+, -?[0-9]+\)"
-]
+	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
+	"NPCchest_[0-9]+"
+	]
 str_vars = [
 	"player_zone",
 	"cached_language",
@@ -75,7 +112,9 @@ str_regex = [
 	"FREE FOLLOWER - .*_crit.",
 	"FREE FOLLOWER - .*_name",
 	"unclaimed_freefollower_name_[0-9]+",
-	"-?[0-9]+,-?[0-9]+,mob."
+	"-?[0-9]+,-?[0-9]+,mob.",
+	"ungenerated_floor_[0-9]+_smallOre",
+	"ungenerated_floor_[0-9]+_largeOre"
 	]
 
 def resolve_type(name:str)->str|None:
