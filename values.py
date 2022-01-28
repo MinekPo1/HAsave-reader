@@ -5,26 +5,56 @@ short_vars = [
 	"player_inner_x",
 	"player_chunk_x",
 	"player_inner_y",
-	"player_inner_z"
+	"player_inner_z",
+	"noobia_version",
+	"PLAYER_ALIVE", #this is actually a boolean where a non-1 value = dead
+	"n_morphed_creatures",
+	"temp_nextLevelExp",
+	"n_entries",
+	"exists",
+	"version"
 	]
 short_regex = [
 	"entry[0-9]+_count",
 	"entry[0-9]+_n_strings",
 	"entry[0-9]+_slot",
-	"perk_[^_]*$"
+	"perk_[^_]*$",
+	"morph[0-9]+",
+	"companion_[0-9]+_level",
+	"FREE FOLLOWER - .*_isGenerated",
+	"FREE FOLLOWER - .*_isClaimed",
+	"discovered_.*",
+	"-?[0-9]+,-?[0-9]+,id"
 	]
 long_vars = [
 	"default",
-	"entry1_n_strings"
+	"new_playerLevel",
+	"unique_id_iterator_new"
 	]
-long_regex = []
+long_regex = [
+	"companion_[0-9]+_nextExp",
+	"companion_[0-9]+_pocketContainerID"
+]
 str_vars = [
-	"player_zone"
+	"player_zone",
+	"cached_language",
+	"creatureName"
 	]
 str_regex = [
 	"entry[0-9]+_string[0-9]+_key",
 	"entry[0-9]+_string[0-9]+_value",
-	"perk_slot_."
+	"perk_slot_.",
+	".*_cached_status",
+	".*_cached_translation",
+	"companion_[0-9]+_creature.",
+	"companion_[0-9]+_combatName",
+	"companion_[0-9]+_companionName",
+	"companion_[0-9]+_wait_message[0-9]",
+	"companion_[0-9]+_guard_message[0-9]",
+	"FREE FOLLOWER - .*_crit.",
+	"FREE FOLLOWER - .*_name",
+	"unclaimed_freefollower_name_[0-9]+",
+	"-?[0-9]+,-?[0-9]+,mob."
 	]
 
 def resolve_type(name:str)->str|None:
