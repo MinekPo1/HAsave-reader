@@ -7,13 +7,20 @@ short_vars = [
 	"temp_nextLevelExp",
 	"n_entries",
 	"exists",
-	"version"
+	"version",
+	"n_respawns",
+	"biome",
+	"floor-tex-index",
+	"floor-rot"
 	]
 short_regex = [
 	"entry[0-9]+_count",
 	"entry[0-9]+_n_strings",
 	"entry[0-9]+_n_shorts",
 	"entry[0-9]+_n_longs",
+	"[0-9]+,[0-9]+,[0-9]+_n_strings",
+	"[0-9]+,[0-9]+,[0-9]+_n_shorts",
+	"[0-9]+,[0-9]+,[0-9]+_n_longs",
 	"entry[0-9]+_slot",
 	"perk_[^_]*$",
 	"morph[0-9]+",
@@ -24,7 +31,16 @@ short_regex = [
 	"-?[0-9]+,-?[0-9]+,id",
 	"entry[0-9]+_short[0-9]+_value",
 	"player_inner_.",
-	"player_chunk_."
+	"player_chunk_.",
+	"respawn_[0-9]+_inner.",
+	"respawn_[0-9]+_second",
+	"respawn_[0-9]+_minute",
+	"respawn_[0-9]+_hour",
+	"respawn_[0-9]+_day",
+	"respawn_[0-9]+_month",
+	"respawn_[0-9]+_year",
+	"[0-9]+,[0-9]+_numObjects",
+	"[0-9]+,[0-9]+,[0-9]+_rot"
 	]
 long_vars = [
 	"default",
@@ -34,7 +50,9 @@ long_vars = [
 long_regex = [
 	"companion_[0-9]+_nextExp",
 	"companion_[0-9]+_pocketContainerID",
-	"entry[0-9]+_long[0-9]+_value"
+	"entry[0-9]+_long[0-9]+_value",
+	"basket[0-9]+",
+	"chunk\(.*,-?[0-9]+, -?[0-9]+\)"
 ]
 str_vars = [
 	"player_zone",
