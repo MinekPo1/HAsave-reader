@@ -24,7 +24,10 @@ short_vars = [
 	"zone_item_n_longs",
 	"zone_item_n_shorts",
 	"outer_item_zone",
-	"outer_item_rot"
+	"outer_item_rot",
+	"n_teleporters",
+	"cave_exists",
+	"floor-model-id"
 	]
 short_regex = [
 	"entry[0-9]+_count",
@@ -42,6 +45,8 @@ short_regex = [
 	".*short[0-9]+_value",
 	"player_inner_.",
 	"player_chunk_.",
+	"zone_origin_chunk_.",
+	"companion_[0-9]+_currExp",
 	"respawn_[0-9]+_inner.",
 	"respawn_[0-9]+_second",
 	"respawn_[0-9]+_minute",
@@ -80,12 +85,14 @@ short_regex = [
 	"stat[0-9]+",
 	"musicboxplaying_[0-9]+",
 	"interior_model_chunk.",
-	"interior_model_inner."
+	"interior_model_inner.",
+	"biome-mob-."
 	]
 long_vars = [
 	"default",
 	"new_playerLevel",
-	"unique_id_iterator_new"
+	"unique_id_iterator_new",
+	"unique_id_iterator"
 	]
 long_regex = [
 	"companion_[0-9]+_nextExp",
@@ -94,7 +101,8 @@ long_regex = [
 	"basket[0-9]+",
 	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
 	"NPCchest_[0-9]+",
-	"shack[0-9]+-zonedata"
+	"shack[0-9]+-zonedata",
+	"sign[0-9]+"
 	]
 str_vars = [
 	"player_zone",

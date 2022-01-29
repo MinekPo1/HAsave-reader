@@ -8,7 +8,8 @@ specialKeyRegex = [
 	"basket[0-9]+",
 	"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
 	"NPCchest_[0-9]+",
-	"shack[0-9]+-zonedata"
+	"shack[0-9]+-zonedata",
+	"sign[0-9]+"
 ]
 
 class HASave:
@@ -98,6 +99,23 @@ class HASave:
 if __name__ == "__main__":
 	import json, os
 #	logging.basicConfig(level=logging.DEBUG)
+	for path in os.listdir("Slot_0"):
+		print(path)
+		pth = f"Slot_0/{path}"
+		logging.info(f"testing {pth}")
+		save = None
+		with open(pth,"rb") as saveFile:
+			byte = saveFile.read()
+			bytearr = bytearray(byte)
+			save = HASave()
+			try:
+				save.parse(bytearr)
+			except NameError as p:
+				print(p)
+		try: os.mkdir("json0")
+		except FileExistsError: 0
+		with open(f"json0/{path}.json","w") as file:
+			json.dump(save.values,file)
 	for path in os.listdir("save_data"):
 		print(path)
 		pth = f"save_data/{path}"
