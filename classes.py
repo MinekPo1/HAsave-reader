@@ -21,6 +21,8 @@ class HASave:
 	
 	def encode(self,version:int,sections:int,data:dict)->bytearray:
 		ba = bytearray()
+		print("serilising")
+		print(data)
 		logging.debug("writing version to bytearray")
 		ba.insert(0,version%255)
 		logging.debug("inserting section count")
@@ -31,7 +33,7 @@ class HASave:
 			datatype = resolve_type(key)
 			if datatype == "short":self.__insert_short__(ba,data[key])
 			if datatype == "long":self.__insert_long__(ba,data[key])
-			if datatype == "string":self.__insert_str__(ba,data[key])
+			if datatype == "str":self.__insert_str__(ba,data[key])
 			if datatype == None: raise ValueError(f"Key: {key} has no type associated")
 		return ba
 
@@ -76,8 +78,10 @@ class HASave:
 			val = "0"+val
 		return val
 
-	def __extract_short__(self,signed=True)->int:
+	def __extract_short__(self,signed=True,requireLowNonZero=False)->int:
 		lh = self.__get_hex__value__()
+		if (lh == '00') and requireLowNonZero: 
+			return 0
 		hh = self.__get_hex__value__()
 		hs = lh+hh
 		val = int.from_bytes(
@@ -103,7 +107,7 @@ class HASave:
 		)
 		return val
 	def __extract_str__(self) -> tuple[str, int]:
-		str_len = self.__extract_short__(signed=False)
+		str_len = self.__extract_short__(signed=False,requireLowNonZero=True)
 		if str_len == 0:
 			logging.debug("zero-length string")
 			return "",0
