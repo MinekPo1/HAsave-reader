@@ -195,6 +195,35 @@ class HASave:
 		ret.decode(ba)
 		return ret
 
+	@classmethod
+	def load(cls,path:str | Path):
+		with open(path,'rb') as f:
+			return cls.from_decode(bytearray(f.read()))
+
+	def dump(self,path:str | Path):
+		with open(path,'wb') as f:
+			f.write(self.encode())
+
+class HASlot(object):
+	def __init__(self,files:dict[str,HASave]):
+		self.files = files
+
+	def __getitem__(self,key):
+		return self.files[key]
+
+	@classmethod
+	def load(cls,path:str | Path):
+		if isinstance(path,str):
+			path = Path(path)
+		files = {file.name: HASave.load(file) for file in path.glob('*')}
+		return cls(files)
+
+	def dump(self,path:str | Path):
+		if isinstance(path,str):
+			path = Path(path)
+		for file,save in self.files.items():
+			save.dump(path/file)
+
 
 if __name__ == "__main__":
 	import json
