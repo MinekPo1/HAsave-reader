@@ -177,6 +177,13 @@ class HASave:
 	def __getitem__(self,key):
 		return self.values[key]
 
+	@classmethod
+	def from_decode(cls, ba:bytearray):
+		ret = cls()
+		ret.decode(ba)
+		return ret
+
+
 if __name__ == "__main__":
 	import json, os
 #	logging.basicConfig(level=logging.DEBUG)
