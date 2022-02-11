@@ -12,14 +12,13 @@ with open("json/the_inventory.json","r") as inv:
 		except Exception as e:
 			print(data)
 			print(traceback.format_exc())
+			print(e)
 	for i in items:
 		print(i.__repr__())
 	recover = {}
-	cout = 0
-	for i in items:
+	for cout, i in enumerate(items):
 		d = i.toDict(cout)
-		recover = recover | d
-		cout += 1
+		recover.update(d)
 	recover["n_stored_items"] = len(items)
 	recover["default"] = 1
 	print(recover)

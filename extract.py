@@ -2,9 +2,12 @@ from classes import HASave
 import sys
 import json
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
-with open(sys.argv[1],"rb") as file:
+if len(sys.argv) < 2:
+	print("Usage: python3 extract.py <save_file>")
+	sys.exit(1)
+
+with open(sys.argv[1],"rb") as file, open(f"{sys.argv[1]}.json","w") as jsonf:
 	save = HASave.from_decode(bytearray(file.read()))
-	with open(f"{sys.argv[1]}.json","w") as jsonf:
-		json.dump(save.values, jsonf)
+	json.dump(save.values, jsonf)
