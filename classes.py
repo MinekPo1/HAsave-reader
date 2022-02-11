@@ -1,6 +1,7 @@
 import logging
 import re
 from values import *
+from pathlib import Path
 
 specialKeyRegex = [
 	r"basket[0-9]+",
@@ -21,7 +22,15 @@ class HASave:
 		self.values = {}
 		self.__offset__ = 0
 
-	def encode(self,version:int,sections:int,data:dict) -> bytearray:
+	def encode(self,version:int = None,sections:int = None,data:dict = None)\
+			-> bytearray:
+		if version is None:
+			version = 2
+		if sections is None:
+			sections = self.section_count
+		if data is None:
+			data = self.values
+
 		ba = bytearray()
 		logging.info("serilising")
 		logging.info(data)
@@ -194,6 +203,15 @@ class HASave:
 		ret = cls()
 		ret.decode(ba)
 		return ret
+
+	@classmethod
+	def load(cls,path:str | Path):
+		with open(path,'rb') as f:
+			return cls.from_decode(bytearray(f.read()))
+
+	def dump(self,path:str | Path):
+		with open(path,'wb') as f:
+			f.write(self.encode())
 
 
 if __name__ == "__main__":

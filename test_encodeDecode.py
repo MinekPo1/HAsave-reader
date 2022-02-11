@@ -5,7 +5,6 @@ try:
 	import deepdiff
 except ImportError:
 	deepdiff = None
-from pprint import pprint
 logging.basicConfig(level=logging.INFO)
 with open("save_data/the_inventory","rb") as ori:
 	save = HASave()
