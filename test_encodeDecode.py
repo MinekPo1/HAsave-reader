@@ -1,11 +1,17 @@
 from classes import HASave
 import json
 import logging
-logging.basicConfig(level=logging.DEBUG)
+try:
+	import deepdiff
+except ImportError:
+	deepdiff = None
+from pprint import pprint
+logging.basicConfig(level=logging.INFO)
 with open("save_data/the_inventory","rb") as ori:
 	save = HASave()
 	print("decoding save")
 	save.decode(bytearray(ori.read()))
+	o = save.values.copy()
 	print("writing json")
 	with open("the_inventory.json","w") as j:
 		json.dump(save.values,j)
@@ -19,3 +25,6 @@ with open("save_data/the_inventory","rb") as ori:
 	print("re-decoding save")
 	save.decode(ba)
 	print(json.dumps(save.values,indent=4))
+	print(save.values == o)
+	if deepdiff:
+		print(json.dumps(deepdiff.DeepDiff(o,save.values),default=str,indent=4))
