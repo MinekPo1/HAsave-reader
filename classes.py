@@ -72,8 +72,8 @@ class HASave:
 				for regex in specialKeyRegex:
 					if re.search(regex,key):
 						superKey = key
-				if superKey is None:
-					raise ValueError(f"Key: {key} is not a special key")
+				# if superKey is None:
+				# 	raise ValueError(f"Key: {key} is not a special key")
 				if superKey not in self.values.keys():
 					self.values[superKey] = {}
 				self.values[superKey][key] = var
