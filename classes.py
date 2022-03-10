@@ -1,6 +1,9 @@
 import logging
 import re
+from typing import Literal, Optional, overload
 from values import *
+from pathlib import Path
+
 
 specialKeyRegex = [
 	r"basket[0-9]+",
@@ -21,7 +24,17 @@ class HASave:
 		self.values = {}
 		self.__offset__ = 0
 
-	def encode(self,version:int,sections:int,data:dict) -> bytearray:
+	def encode(
+		self,version:int | None = None,sections:int | None = None,
+		data:dict | None = None
+	) -> bytearray:
+		if version is None:
+			version = self.save_version
+		if sections is None:
+			sections = self.section_count
+		if data is None:
+			data = self.values
+
 		ba = bytearray()
 		logging.info("serilising")
 		logging.info(data)
@@ -48,22 +61,11 @@ class HASave:
 		self.save_version = self.__pop_byte__()
 		self.section_count = self.__extract_short__()
 		while True:
-			try:
-				key, lenght = self.__extract_str__()
-			except IndexError:
-				break
-			if (lenght == 0 or lenght == 1 or len(key) == 0):
+			key, var = self.__extract_auto__()
+			if key is None:
+				if var == "EOF":
+					break
 				continue
-			logging.debug(f"read key: {key}, len: {lenght}")
-			var_type = resolve_type(key)
-			var = None
-			logging.debug(f"type: {var_type}")
-			if var_type == "short":
-				var = self.__extract_short__()
-			if var_type == "long":
-				var  = self.__extract_long__()
-			if var_type == "str":
-				var = self.__extract_str__()[0]
 			if var is None:
 				raise NameError(f"Parse Error @ Offset: {self.__offset__} {key}")
 			logging.debug(f"value: {var}")
@@ -82,28 +84,38 @@ class HASave:
 
 	def __pop_byte__(self)->int:
 		self.__offset__ += 1
-		return self.data.pop(0)
+		return self.data[self.__offset__-1]
 
 	def __get_hex__value__(self) -> str:
-		val = f"{self.__pop_byte__():02x}"
-		if len(val) <2:
-			val = f'0{val}'
-		return val
+		# sourcery skip: use-fstring-for-concatenation
+		return ("0" + hex(self.__pop_byte__())[2:])[-2:]
+
+	def __extract_auto__(self,signed=True)\
+			-> tuple[str,int | str] | tuple[Optional[str],None | Literal["EOF"]]:
+		try:
+			key, lenght = self.__extract_str__()
+		except IndexError:
+			return None, "EOF"
+		logging.debug(f"read key: {key}, len: {lenght}")
+		if lenght in [0, 1] or len(key) == 0:
+			return None, None
+		var_type = resolve_type(key)
+		if var_type == "short":
+			return var_type, self.__extract_short__(signed)
+		if var_type == "long":
+			return var_type, self.__extract_long__(signed)
+		if var_type == "str":
+			return var_type, self.__extract_str__()[0]
+		logging.error(f"Unknown type: {var_type}")
+		return key, None
 
 	def __extract_short__(self,signed:bool = True,requireLowNonZero:bool = False)\
 			-> int:
-		lh = self.__get_hex__value__()
-		if (lh == '00') and requireLowNonZero:
+		lh = self.__pop_byte__()
+		if (lh == 0) and requireLowNonZero:
 			return 0
-		hh = self.__get_hex__value__()
-		hs = lh+hh
-		return int.from_bytes(
-			bytearray.fromhex(
-				hs,
-			),
-			'little',
-			signed=signed
-		)
+		hh = self.__pop_byte__()
+		return hh*256+lh
 
 	def __extract_long__(self,signed=True) -> int:
 		"""
@@ -113,6 +125,7 @@ class HASave:
 		hhh = self.__get_hex__value__()
 		hs = llh + lh + hh + hhh
 		"""
+		"""
 		hs = "".join([self.__get_hex__value__() for _ in range(4)])
 		return int.from_bytes(
 			bytearray.fromhex(
@@ -121,6 +134,8 @@ class HASave:
 			'little',
 			signed=signed
 		)
+		"""
+		return sum(self.__pop_byte__() * 256 ** i for i in range(4))
 
 	def __extract_str__(self) -> tuple[str, int]:
 		str_len = self.__extract_short__(signed=False,requireLowNonZero=True)
@@ -131,16 +146,18 @@ class HASave:
 			logging.debug("uneven length string")
 			return "",1
 		string = ""
-		for _ in range(int(str_len/2)):
-			chrv = self.__extract_short__(signed=False)
-			try:
+		chrv = -1
+		try:
+			for _ in range(int(str_len/2)):
+				chrv = self.__extract_short__(signed=False)
 				val = chr(chrv)
-			except ValueError as ve:
+				if val == '\x00':
+					return "",1
+				string += val
+		except ValueError as ve:
+			if chrv != -1:
 				logging.debug(f"{chrv} is not a valid char")
-				raise ve from ve
-			if val == '\x00':
-				return "",1
-			string += val
+			raise ve from ve
 		return string,str_len
 
 	def __insert_short__(self,ba:bytearray,value:int):
@@ -195,11 +212,108 @@ class HASave:
 		ret.decode(ba)
 		return ret
 
+	@classmethod
+	def load(cls,path:str | Path):
+		with open(path,'rb') as f:
+			return cls.from_decode(bytearray(f.read()))
+
+	def dump(self,path:str | Path):
+		with open(path,'wb') as f:
+			f.write(self.encode())
+
+
+class HASlot(object):
+	class HASlotValuesView:
+		"""
+		A view of the values in a slot.
+		Should be compatible with a dict-like interface.
+		"""
+		def __init__(self,slot:'HASlot'):
+			self.slot = slot
+
+		def __getitem__(self,key):
+			return self.slot.files[key].values
+
+		def __setitem__(self,key,value):
+			self.slot.files[key].values = value
+
+		def __delitem__(self,key):
+			del self.slot.files[key]
+
+		def __iter__(self):
+			return iter(self.slot.files)
+
+		def __len__(self):
+			return len(self.slot.files)
+
+		def __contains__(self,key):
+			return key in self.slot.files
+
+		def __repr__(self):
+			return f"<HASlotValuesView of {self.slot}>"
+
+		def values(self):
+			for f in self.slot.files.values():
+				yield f.values
+
+		def keys(self):
+			return self.slot.files.keys()
+
+		def items(self):
+			for k,f in self.slot.files.items():
+				yield k,f.values
+
+	def __init__(self,files:dict[str,HASave]):
+		self.files = files
+		self.values = self.HASlotValuesView(self)
+
+	def __getitem__(self,key):
+		return self.files[key]
+
+	@overload
+	@classmethod
+	def load(cls,path:str | Path, ignore_errors:Literal[True] = True)\
+			-> 'tuple[HASlot,list[str]]':
+		...
+
+	@overload
+	@classmethod
+	def load(cls,path:str | Path, ignore_errors:Literal[False]) \
+			-> 'tuple[HASlot,None]':
+		...
+
+	@classmethod
+	def load(cls,path:str | Path, ignore_errors:bool = True):
+		if isinstance(path,str):
+			path = Path(path)
+		fails = []
+		files = {}
+		for file in path.glob('*'):
+			logging.info(f"loading {file}")
+			try:
+				files[str(file.relative_to(path))] = HASave.load(file)
+			except Exception as e:
+				logging.error(f"failed to load {file} due to a {e!r}")
+				if ignore_errors:
+					fails.append(str(file.relative_to(path)))
+				else:
+					raise ValueError("Unable to load file") from e
+		return cls(files),fails if ignore_errors else None
+
+	def dump(self,path:str | Path):
+		if isinstance(path,str):
+			path = Path(path)
+		for file,save in self.files.items():
+			save.dump(path/file)
+
+
+MODE = "HASlot"
+
 
 if __name__ == "__main__":
 	import json
 	import os
-	logging.basicConfig(level=logging.DEBUG)
+	logging.basicConfig(level=logging.INFO)
 	"""
 	for path in os.listdir("Slot_0"):
 		print(path)
@@ -220,25 +334,37 @@ if __name__ == "__main__":
 			json.dump(save.values,file)
 	"""
 	parsefailures = []
-	for path in os.listdir("save_data"):
-		print(path)
-		pth = f"save_data/{path}"
-		logging.info(f"testing {pth}")
-		save = None
-		with open(pth,"rb") as saveFile:
-			byte = saveFile.read()
-			bytearr = bytearray(byte)
-			save = HASave()
-			try:
-				save.decode(bytearr)
-			except NameError as p:
-				print(p)
-				parsefailures.append(path)
-		try:
-			os.mkdir("json")
-		except FileExistsError:
-			pass
-		with open(f"json/{path}.json","w") as file:
-			json.dump(save.values,file)
-	print("the following files failed parsing")
-	print("\n".join(parsefailures))
+	try:
+		os.mkdir("json")
+	except FileExistsError:
+		logging.warning("json folder already exists")
+
+	org_path = Path(r"Slot_2")
+
+	if MODE == "HASave":
+		for path in org_path.glob("*"):
+			logging.info(f"parsing {path}")
+			save = None
+			with path.open("rb") as saveFile:
+				byte = saveFile.read()
+				bytearr = bytearray(byte)
+				save = HASave()
+				try:
+					save.decode(bytearr)
+				except NameError as p:
+					logging.info(f"{p} failed")
+					parsefailures.append(path)
+
+			with open(f"json/{path.relative_to(org_path)}.json","w") as file:
+				json.dump(save.values,file)
+	elif MODE == "HASlot":
+		file,parsefailures = HASlot.load(org_path)
+		for k, v in file.files.items():
+			with open(f"json/{k}.json","w") as file:
+				json.dump(v.values,file)
+
+	if parsefailures:
+		print("the following files failed parsing")
+		print("\n".join([str(i) for i in parsefailures]))
+	else:
+		print("all files parsed successfully")
