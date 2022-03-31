@@ -1,5 +1,5 @@
 import logging
-import re
+# import re
 from typing import Literal, Optional, overload
 from values import *
 from pathlib import Path
@@ -38,13 +38,17 @@ class HASave:
 		ba = bytearray()
 		logging.info("serilising")
 		logging.info(data)
-		logging.debug("writing version to bytearray")
+		logging.debug("(HASave.encode) writing version to bytearray")
 		ba.insert(0, version % 255)
-		logging.debug("inserting section count")
+		logging.debug("(HASave.encode) inserting section count")
 		self.__insert_short__(ba,sections)
 		for key, value in data.items():
+			if key is None:
+				raise ValueError("Key is None")
+			if value is None:
+				raise ValueError(f"Value for key: {key} is None")
 			self.__insert_str__(ba,key)
-			logging.debug(f"inserting key: {key}")
+			logging.debug(f"(HASave.encode) inserting key: {key}")
 			datatype = resolve_type(key)
 			if datatype == "short":
 				self.__insert_short__(ba,value)
@@ -53,7 +57,7 @@ class HASave:
 			if datatype == "str":
 				self.__insert_str__(ba, value)
 			if datatype is None:
-				raise ValueError(f"Key: {key} has no type associated")
+				raise ValueError(f"Key: {key!r} has no type associated")
 		return ba
 
 	def decode(self, ba:bytearray):
@@ -62,25 +66,27 @@ class HASave:
 		self.section_count = self.__extract_short__()
 		while True:
 			key, var = self.__extract_auto__()
+			if key == "long":
+				logging.error("key is long!")
 			if key is None:
 				if var == "EOF":
 					break
 				continue
 			if var is None:
 				raise NameError(f"Parse Error @ Offset: {self.__offset__} {key}")
-			logging.debug(f"value: {var}")
-			if self.section_count >= 2:
-				superKey = None
-				for regex in specialKeyRegex:
-					if re.search(regex,key):
-						superKey = key
-				# if superKey is None:
-				# 	raise ValueError(f"Key: {key} is not a special key")
-				if superKey not in self.values.keys():
-					self.values[superKey] = {}
-				self.values[superKey][key] = var
-			else:
-				self.values[key] = var
+			logging.debug(f"(HASave.decode) {key}: {var}")
+			# if self.section_count >= 2:
+			# 	superKey = None
+			# 	for regex in specialKeyRegex:
+			# 		if re.search(regex,key):
+			# 			superKey = key
+			# 	if superKey is None:
+			# 		self.values[key] = var
+			# 	if superKey not in self.values.keys():
+			# 		self.values[superKey] = {}
+			# 	self.values[superKey][key] = var
+			# else:
+			self.values[key] = var
 
 	def __pop_byte__(self)->int:
 		self.__offset__ += 1
@@ -89,6 +95,8 @@ class HASave:
 	def __get_hex__value__(self) -> str:
 		# sourcery skip: use-fstring-for-concatenation
 		return ("0" + hex(self.__pop_byte__())[2:])[-2:]
+		# this looks bad, but its the fastest way.
+		# Also this function is never used anyway.
 
 	def __extract_auto__(self,signed=True)\
 			-> tuple[str,int | str] | tuple[Optional[str],None | Literal["EOF"]]:
@@ -96,17 +104,20 @@ class HASave:
 			key, lenght = self.__extract_str__()
 		except IndexError:
 			return None, "EOF"
-		logging.debug(f"read key: {key}, len: {lenght}")
+		logging.debug(f"(HASave.__extract_auto__) read key: {key}, len: {lenght}")
 		if lenght in [0, 1] or len(key) == 0:
 			return None, None
 		var_type = resolve_type(key)
 		if var_type == "short":
-			return var_type, self.__extract_short__(signed)
+			return key, self.__extract_short__(signed)
 		if var_type == "long":
-			return var_type, self.__extract_long__(signed)
+			return key, self.__extract_long__(signed)
 		if var_type == "str":
-			return var_type, self.__extract_str__()[0]
-		logging.error(f"Unknown type: {var_type}")
+			return key, self.__extract_str__()[0]
+		if var_type is None:
+			logging.error(f"Key: {key!r} has no type associated")
+		else:
+			logging.error(f"Unknown type: {var_type!r}")
 		return key, None
 
 	def __extract_short__(self,signed:bool = True,requireLowNonZero:bool = False)\
@@ -118,32 +129,18 @@ class HASave:
 		return hh*256+lh
 
 	def __extract_long__(self,signed=True) -> int:
-		"""
-		llh = self.__get_hex__value__()
-		lh = self.__get_hex__value__()
-		hh = self.__get_hex__value__()
-		hhh = self.__get_hex__value__()
-		hs = llh + lh + hh + hhh
-		"""
-		"""
-		hs = "".join([self.__get_hex__value__() for _ in range(4)])
-		return int.from_bytes(
-			bytearray.fromhex(
-				hs
-			),
-			'little',
-			signed=signed
-		)
-		"""
+		# TODO: implement non signed longs
+		if not(signed):
+			raise NotImplementedError("Unsigned longs are not implemented")
 		return sum(self.__pop_byte__() * 256 ** i for i in range(4))
 
 	def __extract_str__(self) -> tuple[str, int]:
 		str_len = self.__extract_short__(signed=False,requireLowNonZero=True)
 		if str_len == 0:
-			logging.debug("zero-length string")
+			logging.debug("(HASave.__extract_str__) zero-length string")
 			return "",0
 		if str_len % 2 == 1:
-			logging.debug("uneven length string")
+			logging.debug("(HASave.__extract_str__) uneven length string")
 			return "",1
 		string = ""
 		chrv = -1
@@ -153,27 +150,26 @@ class HASave:
 				val = chr(chrv)
 				if val == '\x00':
 					return "",1
+					# maybe this should be interpreted as an early string termination?
 				string += val
 		except ValueError as ve:
 			if chrv != -1:
-				logging.debug(f"{chrv} is not a valid char")
+				logging.debug(f"(HASave.__extract_str__) {chrv} is not a valid char")
 			raise ve from ve
 		return string,str_len
 
 	def __insert_short__(self,ba:bytearray,value:int):
-		logging.debug(f"writing short: {value}")
+		logging.debug(f"(HASave.__extract_short__) writing short: {value}")
 		if value < 0:
 			value += 65536
 		if value < 0 or value > 65535:
 			raise ValueError("Value must be more then -32769 but less then 32768")
 
-		bits = f"{value:0>16b}"
-		byte = [bits[i:i+8] for i in range(0, len(bits), 8)]
-		for _ in range(2):
-			ba.append(int(byte.pop(0),2))
+		ba.append(value  % 256)
+		ba.append(value // 256)
 
 	def __insert_long__(self,ba:bytearray,value:int):
-		logging.debug(f"writing long: {value}")
+		logging.debug(f"(HASave.__extract_long__) writing long: {value}")
 		val = value
 		if val < 0:
 			val += 4294967296
@@ -182,23 +178,23 @@ class HASave:
 				"Value must be more then -2147483649 "
 				"but less then 2147483648"
 			)
-		bits = f"{val:0>32b}"
-		byte = [bits[i:i+8] for i in range(0, len(bits), 8)]
-		for _ in range(4):
-			ba.append(int(byte.pop(0),2))
+		ba.append(val           % 256)
+		ba.append(val // 256    % 256)
+		ba.append(val // 256**2 % 256)
+		ba.append(val // 256**3 % 256)
+		# yes I know
 
 	def __insert_str__(self,ba:bytearray,string:str):
-		logging.debug(f"writing string: {string}")
+		logging.debug(f"(HASave.__insert_str__) writing string: {string}")
+		if string is None:
+			raise ValueError("String must not be None")
 		if len(string) > 125:
 			raise ValueError('string must be less then 125 charachters long')
-		b = bytearray()
+		ba.append(len(string)*2)
+		ba.append(0)
 		for char in string:
-			b.append(int.from_bytes(char.encode(),'little'))
-			b.append(0)
-		b.insert(0,0)
-		b.insert(0,len(b)-1)
-		for byte in b:
-			ba.append(byte)
+			ba.append(ord(char))
+			ba.append(0)
 
 	def __repr__(self):
 		return f"<HAsave v:{self.save_version} obj#: {len(self.values)}>"
@@ -339,7 +335,7 @@ if __name__ == "__main__":
 	except FileExistsError:
 		logging.warning("json folder already exists")
 
-	org_path = Path(r"Slot_2")
+	org_path = Path(r"Slot_0")
 
 	if MODE == "HASave":
 		for path in org_path.glob("*"):
