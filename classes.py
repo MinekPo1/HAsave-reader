@@ -80,6 +80,7 @@ class HASave:
 					self.values[superKey] = {}
 				self.values[superKey][key] = var
 			else:
+				print(f'sv {key}: {var}')
 				self.values[key] = var
 
 	def __pop_byte__(self)->int:
@@ -101,11 +102,11 @@ class HASave:
 			return None, None
 		var_type = resolve_type(key)
 		if var_type == "short":
-			return var_type, self.__extract_short__(signed)
+			return key, self.__extract_short__(signed)
 		if var_type == "long":
-			return var_type, self.__extract_long__(signed)
+			return key, self.__extract_long__(signed)
 		if var_type == "str":
-			return var_type, self.__extract_str__()[0]
+			return key, self.__extract_str__()[0]
 		logging.error(f"Unknown type: {var_type}")
 		return key, None
 

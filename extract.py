@@ -2,7 +2,7 @@ from classes import HASave
 import sys
 import json
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 if len(sys.argv) < 2:
 	print("Usage: python3 extract.py <save_file>")
