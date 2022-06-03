@@ -11,3 +11,4 @@
 [Slot_0](Slot_0) contains a save file from `H is op#6895` AKA `ILuvHybrid4747`
 
 [Slot_2](Slot_2) contains MinekPo1's RND save file.
+[hat](hat) from MinekPo1 on discord has a painters had (i hope item wont suddenly become common now that there is a public save with it -_-)
