@@ -1,7 +1,12 @@
-__pycache__
+**/__pycache__/**
+.mypy_cache/**
 # dumps
 **.json
 **.json0
 res/**
+**.log
 # profiling data
 **.prof
+# user config
+.vscode/**
+.idea/**

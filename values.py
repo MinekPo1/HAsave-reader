@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 
 
 def compile_all(reg: list[str]) -> list[re.Pattern[str]]:
@@ -112,6 +113,7 @@ str_regex = compile_all([
 	])
 
 
+@lru_cache(maxsize=None)
 def resolve_type(name:str) -> str | None:
 	if name in short_vars:
 		return "short"
