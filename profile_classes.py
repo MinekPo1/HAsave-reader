@@ -11,13 +11,14 @@ if not finl_path.exists():
 
 errs = []
 files: dict[Path,HASave] = {}
-for file in orig_path.glob("*"):
-	try:
-		hs = HASave()
-		files[file] = hs
-		hs.decode(bytearray(file.read_bytes()))
-	except NameError:
-		errs.append(file)
+with cProfile.Profile() as prr:
+	for file in orig_path.glob("*"):
+		try:
+			hs = HASave()
+			files[file] = hs
+			hs.decode(bytearray(file.read_bytes()))
+		except NameError:
+			errs.append(file)
 
 print(
 	f"{len(errs)} files failed parsing, "
@@ -26,9 +27,9 @@ print(
 
 errs = []
 
-with cProfile.Profile() as pr:
+with cProfile.Profile() as prw:
 	for i, (file, save) in enumerate(files.items()):
-		print(f"{i}/{len(files)}")
+		print(f"{i}/{len(files)}",end="\r")
 		try:
 			f2 = (finl_path / file.relative_to(orig_path))
 			f2.open("wb").write(save.encode())
@@ -44,5 +45,6 @@ print(
 	f"{len(files)-len(errs)} files successfully written"
 )
 
-pr.dump_stats("profile.prof")
-print("profile.prof has been generated")
+prr.dump_stats("profile_read.prof")
+prw.dump_stats("profile_write.prof")
+print("profile_read.prof and profile_write.prof have been generated")

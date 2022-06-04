@@ -1,3 +1,7 @@
 __pycache__
-*.json
-*.json0
+# dumps
+**.json
+**.json0
+res/**
+# profiling data
+**.prof

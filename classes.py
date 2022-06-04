@@ -10,12 +10,13 @@ specialKeyRegex = [
 	r"chunk\(.*,-?[0-9]+, -?[0-9]+\)",
 	r"NPCchest_[0-9]+",
 	r"shack[0-9]+-zonedata",
-	r"sign[0-9]+"
+	r"sign[0-9]+",
 ]
 
 
 class HASave:
 	__offset__:int = 0
+	values: dict[str, int | str]
 
 	def __init__(self):
 		self.data = bytearray([])
@@ -26,7 +27,7 @@ class HASave:
 
 	def encode(
 		self,version:int | None = None,sections:int | None = None,
-		data:dict | None = None
+		data:dict[str, int | str] | None = None
 	) -> bytearray:
 		if version is None:
 			version = self.save_version
@@ -62,6 +63,7 @@ class HASave:
 
 	def decode(self, ba:bytearray):
 		self.data = ba
+		self.__offset__ = 0
 		self.save_version = self.__pop_byte__()
 		self.section_count = self.__extract_short__()
 		while True:
@@ -144,25 +146,38 @@ class HASave:
 			return "",1
 		string = ""
 		chrv = -1
-		try:
-			for _ in range(int(str_len/2)):
-				chrv = self.__extract_short__(signed=False)
-				val = chr(chrv)
-				if val == '\x00':
-					return "",1
-					# maybe this should be interpreted as an early string termination?
-				string += val
-		except ValueError as ve:
-			if chrv != -1:
-				logging.debug(f"(HASave.__extract_str__) {chrv} is not a valid char")
-			raise ve from ve
+		# try:
+		# 	for _ in range(int(str_len/2)):
+		# 		val = chr(self.__pop_byte__())
+		# 		self.__offset__ += 1
+		# 		# NOTE: strings seem to be encoded in UTF-16, but mostly use
+		# 		# ASCII characters. To avoid beeing tripped up by corrupt strings,
+		# 		# we just use the first byte of the UTF-16 encoding and hope for the best.
+		# 		# This also cuts down on time.
+		# 		if val == '\x00':
+		# 			return "",1
+		# 			# maybe this should be interpreted as an early string termination?
+		# 		string += val
+		# except ValueError as ve:
+		# 	if chrv != -1:
+		# 		logging.debug(f"(HASave.__extract_str__) {chrv} is not a valid char")
+		# 	raise ve from ve
+
+		# get the raw string
+		raw_string = self.data[self.__offset__:self.__offset__+str_len:2]
+		# check if any null bytes are present
+		if b'\x00' in raw_string:
+			# cut off to the first null byte
+			raw_string = raw_string[:raw_string.index(b'\x00')]
+		self.__offset__ += len(raw_string) * 2
+		string = raw_string.decode('ascii',errors="ignore")  # this will result in some lost bits but oh well
 		return string,str_len
 
 	def __insert_short__(self,ba:bytearray,value:int):
 		logging.debug(f"(HASave.__extract_short__) writing short: {value}")
 		if value < 0:
 			value += 65536
-		if value < 0 or value > 65535:
+		if not 0 <= value <= 65535:
 			raise ValueError("Value must be more then -32769 but less then 32768")
 
 		ba.append(value  % 256)
@@ -172,29 +187,36 @@ class HASave:
 		logging.debug(f"(HASave.__extract_long__) writing long: {value}")
 		val = value
 		if val < 0:
+			# Note: this is not the traditional way to negate numbers
+			# but it works
 			val += 4294967296
-		if val < 0 or val > 4294967295:
+		if not 0 <= val <= 4294967295:
 			raise ValueError(
 				"Value must be more then -2147483649 "
 				"but less then 2147483648"
 			)
+		# yes I know
 		ba.append(val           % 256)
 		ba.append(val // 256    % 256)
 		ba.append(val // 256**2 % 256)
 		ba.append(val // 256**3 % 256)
-		# yes I know
 
 	def __insert_str__(self,ba:bytearray,string:str):
 		logging.debug(f"(HASave.__insert_str__) writing string: {string}")
 		if string is None:
 			raise ValueError("String must not be None")
 		if len(string) > 125:
-			raise ValueError('string must be less then 125 charachters long')
+			raise ValueError('string must be less then 125 characters long')
 		ba.append(len(string)*2)
 		ba.append(0)
-		for char in string:
-			ba.append(ord(char))
-			ba.append(0)
+		# for char in string:
+		# 	ba.append(ord(char))
+		# 	ba.append(0)
+		# ba.extend(
+		# 	''.join(map(lambda i: ''.join(i),zip(string,"\0"*len(string)))).encode('utf-8')
+		# )
+		v = bytearray(len(string)*2)
+		v[::2] = string.encode('utf-8')
 
 	def __repr__(self):
 		return f"<HAsave v:{self.save_version} obj#: {len(self.values)}>"
