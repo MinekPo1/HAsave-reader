@@ -77,18 +77,19 @@ class HASave:
 			if var is None:
 				raise NameError(f"Parse Error @ Offset: {self.__offset__} {key}")
 			logging.debug(f"(HASave.decode) {key}: {var}")
-			# if self.section_count >= 2:
-			# 	superKey = None
-			# 	for regex in specialKeyRegex:
-			# 		if re.search(regex,key):
-			# 			superKey = key
-			# 	if superKey is None:
-			# 		self.values[key] = var
-			# 	if superKey not in self.values.keys():
-			# 		self.values[superKey] = {}
-			# 	self.values[superKey][key] = var
-			# else:
-			self.values[key] = var
+			if self.section_count >= 2:
+				superKey = None
+				for regex in specialKeyRegex:
+					if re.search(regex,key):
+						superKey = key
+				# if superKey is None:
+				# 	raise ValueError(f"Key: {key} is not a special key")
+				if superKey not in self.values.keys():
+					self.values[superKey] = {}
+				self.values[superKey][key] = var
+			else:
+				print(f'sv {key}: {var}')
+				self.values[key] = var
 
 	def __pop_byte__(self)->int:
 		self.__offset__ += 1
