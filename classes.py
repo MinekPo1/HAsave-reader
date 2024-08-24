@@ -171,7 +171,7 @@ class HASave:
 		bits = f"{value:0>16b}"
 		byte = [bits[i:i+8] for i in range(0, len(bits), 8)]
 		for _ in range(2):
-			ba.append(int(byte.pop(0),2))
+			ba.append(int(byte.pop(-1),2))
 
 	def __insert_long__(self,ba:bytearray,value:int):
 		logging.debug(f"writing long: {value}")
@@ -186,7 +186,7 @@ class HASave:
 		bits = f"{val:0>32b}"
 		byte = [bits[i:i+8] for i in range(0, len(bits), 8)]
 		for _ in range(4):
-			ba.append(int(byte.pop(0),2))
+			ba.append(int(byte.pop(-1),2))
 
 	def __insert_str__(self,ba:bytearray,string:str):
 		logging.debug(f"writing string: {string}")
