@@ -23,6 +23,7 @@ with open("save_data/the_inventory","rb") as ori:
 	print(save.section_count)
 	print(save.values["default"])
 	print("re-decoding save")
+	save = HASave()
 	save.decode(ba)
 	print(json.dumps(save.values,indent=4))
 	print(save.values == o)
